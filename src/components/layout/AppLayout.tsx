@@ -25,7 +25,7 @@ function AppLayout({ theme, onThemeChange }: AppLayoutProps) {
         return mockChats.find((chat) => chat.id === activeChatId);
     }, [activeChatId]);
 
-    const activeMessages = useMemo(() => {
+    const initialMessages = useMemo(() => {
         return mockMessages.filter((message) => message.chatId === activeChatId);
     }, [activeChatId]);
 
@@ -56,7 +56,7 @@ function AppLayout({ theme, onThemeChange }: AppLayoutProps) {
 
             <ChatWindow
                 activeChat={activeChat}
-                messages={activeMessages}
+                initialMessages={initialMessages}
                 onOpenSettings={() => setIsSettingsOpen(true)}
             />
 

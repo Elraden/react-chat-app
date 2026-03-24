@@ -88,7 +88,7 @@ select:focus {
 
 .app-layout {
     display: grid;
-    grid-template-columns: 1fr 6fr;
+    grid-template-columns: 400px 1fr;
     height: 100vh;
     background: var(--color-bg);
 }
@@ -254,6 +254,14 @@ select:focus {
     flex-direction: row-reverse;
 }
 
+.message__avatar-block {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
 .message__avatar {
     width: 36px;
     height: 36px;
@@ -281,11 +289,11 @@ select:focus {
 }
 
 .message__top {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 8px;
 }
 
 .message__author {
@@ -309,6 +317,14 @@ select:focus {
 
 .message__content {
     overflow-wrap: anywhere;
+}
+
+.message__time {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-secondary);
+    text-align: right;
 }
 
 .markdown p {
@@ -378,13 +394,20 @@ select:focus {
     }
 }
 
-.input-area {
+.input-area__main {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
+    gap: 10px;
+    flex-direction: column;
     border-top: 1px solid var(--color-border);
     padding: 16px 20px;
     background: var(--color-surface);
+}
+
+.input-area__text {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
 }
 
 .input-area__textarea {

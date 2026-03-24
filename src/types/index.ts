@@ -5,15 +5,14 @@ export type Chat = {
     isActive?: boolean;
 };
 
-export type MessageVariant = "user" | "assistant";
-
+export type MessageRole = "user" | "assistant";
 
 export type ChatMessage = {
     id: string;
     chatId: string;
-    author: string;
-    text: string;
-    variant: MessageVariant;
+    role: MessageRole;
+    content: string;
+    timestamp: string;
 }
 
 export type ScopeType = "GIGACHAT_API_PERS" | "GIGACHAT_API_B2B" | "GIGACHAT_API_CORP";

@@ -10,7 +10,7 @@ const Message = ({ message }: MessageProps) => {
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(message.text);
+            await navigator.clipboard.writeText(message.content);
             setCopied(true);
 
             setTimeout(() => {
@@ -21,31 +21,44 @@ const Message = ({ message }: MessageProps) => {
         }
     }
 
+    const isAssistant = message.role === "assistant";
+    const authorLabel = message.role === "assistant" ? "GigaChat" : "Вы";
+    const variantClass = message.role ===
+        "assistant"
+        ? "message message--assistant"
+        : "message message--user"
+
     return (
         <div
-            className={`message message--${message.variant}`}
-            aria-label={`Сообщение ${message.author}`}
+            className={variantClass}
+            aria-label={`Сообщение ${authorLabel}`}
         >
-            {message.variant === 'assistant' && (
-                <div className='message__avatar' aria-hidden='true'>
-                    G
-                </div>
-            )}
             <div className='message__body'>
-                <div className='message__top'>
-                    <span className='message__author'>{message.author}</span>
-                    <button
-                        type='button'
-                        className='message__copy'
-                        onClick={handleCopy}
-                        aria-label='Скопировать сообщение'
-                    >
-                        {copied ? "Скопировано" : "Копировать"}
-                    </button>
+                <div className='message__avatar-block'>
+                    {isAssistant && (
+                        <div className='message__avatar' aria-hidden='true'>
+                            G
+                        </div>
+                    )}
+
+                    <div className='message__top'>
+                        <span className='message__author'>{authorLabel}</span>
+                        <button
+                            type='button'
+                            className='message__copy'
+                            onClick={handleCopy}
+                            aria-label='Скопировать сообщение'
+                        >
+                            {copied ? "Скопировано" : "Копировать"}
+                        </button>
+                    </div>
                 </div>
 
                 <div className='message__content markdown'>
-                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+                <div className='message__time'>
+                    {new Date(message.timestamp).toLocaleTimeString()}
                 </div>
             </div>
         </div>
