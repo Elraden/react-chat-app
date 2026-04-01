@@ -1,13 +1,21 @@
-import type { Chat } from "../../types";
+import type { Chat } from "../../features/chat/model/types";
 import ChatItem from "./ChatItem";
 
 type ChatListProps = {
     chats: Chat[];
     activeChatId: string;
     onSelectChat: (chatId: string) => void;
-}
+    onRenameChat: (chatId: string, nextTitle: string) => void;
+    onDeleteChat: (chatId: string) => void;
+};
 
-const ChatList = ({ chats, activeChatId, onSelectChat }: ChatListProps) => {
+const ChatList = ({
+    chats,
+    activeChatId,
+    onSelectChat,
+    onRenameChat,
+    onDeleteChat,
+}: ChatListProps) => {
     return (
         <ul className="chat-list">
             {chats.map((chat) => (
@@ -16,10 +24,12 @@ const ChatList = ({ chats, activeChatId, onSelectChat }: ChatListProps) => {
                     chat={chat}
                     isActive={chat.id === activeChatId}
                     onSelect={onSelectChat}
+                    onRename={onRenameChat}
+                    onDelete={onDeleteChat}
                 />
             ))}
         </ul>
-    )
-}
+    );
+};
 
-export default ChatList
+export default ChatList;

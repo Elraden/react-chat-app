@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+    useEffect,
+    useRef,
+    type ChangeEvent,
+    type FormEvent,
+    type KeyboardEvent,
+} from "react";
 import Button from "../ui/Button";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImages } from "@fortawesome/free-solid-svg-icons";
 
 function getLineHeight(el: HTMLTextAreaElement) {
@@ -14,13 +20,30 @@ function getLineHeight(el: HTMLTextAreaElement) {
 }
 
 type InputAreaProps = {
+    input: string;
     isLoading: boolean;
-    onSend: (text: string) => void;
-}
+    onInputChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+    onStop: () => void;
+    files: File[];
+    onFilesChange: (files: File[]) => void;
+    onRemoveFile: (index: number) => void;
+};
 
-function InputArea({ isLoading, onSend }) {
-    const [value, setValue] = useState("");
+function InputArea({
+    input,
+    isLoading,
+    onInputChange,
+    onSubmit,
+    onStop,
+    files,
+    onFilesChange,
+    onRemoveFile,
+}: InputAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const maxRows = 5;
 
     const resize = () => {
@@ -39,53 +62,102 @@ function InputArea({ isLoading, onSend }) {
 
     useEffect(() => {
         resize();
-    }, [value]);
-
-    const sendMessage = () => {
-        const trimmed = value.trim();
-        if (!trimmed || isLoading) return;
-
-        onSend(trimmed)
-        setValue("");
-    };
-
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        sendMessage();
-    }
+    }, [input]);
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+
+            if (input.trim().length === 0 && files.length === 0) {
+                return;
+            }
+
+            const form = e.currentTarget.form;
+            if (form) {
+                form.requestSubmit();
+            }
         }
     };
 
-    const isSendDisabled = value.trim().length === 0 || isLoading;
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files ?? []);
+        onFilesChange(selectedFiles);
+    };
+
+    const handleOpenFileDialog = () => {
+        fileInputRef.current?.click();
+    };
+
+    const isSendDisabled =
+        (input.trim().length === 0 && files.length === 0) || isLoading;
 
     return (
-        <form action="input-area" onSubmit={handleSubmit}>
+        <form className="input-area" onSubmit={onSubmit}>
             <div className="input-area__main">
                 <div className="input-area__text">
-                    <button type="button" className="icon-btn" aria-label="Прикрепить изображение">
+                    <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label="Прикрепить изображение"
+                        onClick={handleOpenFileDialog}
+                        disabled={isLoading}
+                    >
                         <FontAwesomeIcon icon={faImages} />
                     </button>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        hidden
+                        onChange={handleFileChange}
+                    />
 
                     <textarea
                         ref={textareaRef}
                         className="input-area__textarea"
                         placeholder="Введите сообщение..."
                         rows={1}
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
+                        value={input}
+                        onChange={onInputChange}
                         onKeyDown={handleKeyDown}
                         disabled={isLoading}
                     />
                 </div>
+
+                {files.length > 0 && (
+                    <div className="input-area__files">
+                        {files.map((file, index) => (
+                            <div
+                                key={`${file.name}-${index}`}
+                                className="input-area__file"
+                            >
+                                <span>
+                                    {file.name} ({file.size} байт)
+                                </span>
+
+                                <button
+                                    type="button"
+                                    className="input-area__remove-file"
+                                    onClick={() => onRemoveFile(index)}
+                                >
+                                    Удалить
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 <div className="input-area__actions">
-                    <Button variant="secondary" type="button" disabled={isLoading}>
+                    <Button
+                        variant="secondary"
+                        type="button"
+                        disabled={!isLoading}
+                        onClick={onStop}
+                    >
                         Стоп
                     </Button>
+
                     <Button
                         variant="primary"
                         type="submit"

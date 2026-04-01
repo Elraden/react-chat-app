@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { scopeOptions } from "../../data/mocks";
-import type { ScopeType } from "../../types";
+import type { ScopeType } from "../../features/chat/model/types";
 import Button from "../ui/Button";
 import ErrorMessage from "../ui/ErrorMessage";
 

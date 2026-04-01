@@ -1,116 +1,114 @@
-import { mockMessages } from "../../data/mocks";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
 import Button from "../ui/Button";
 import EmptyState from "./EmptyState";
 import InputArea from "./InputArea";
 import MessageList from "./MessageList";
 import TypingIndicator from "./TypingIndicator";
-import type { Chat, ChatMessage } from "../../types";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear } from "@fortawesome/free-solid-svg-icons";
-import { useState, useRef, useEffect } from "react";
+import { useChatContext } from "../../app/providers/ChatProvider";
 
 type ChatWindowProps = {
-    activeChat: Chat | undefined;
-    initialMessages: ChatMessage[];
+    activeChatId: string;
+    activeChatTitle?: string;
     onOpenSettings: () => void;
 };
 
-const ChatWindow = ({ activeChat, initialMessages, onOpenSettings }: ChatWindowProps) => {
-    const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
-    const [isLoading, setIsLoading] = useState(false);
+function ChatWindow({
+    activeChatId,
+    activeChatTitle,
+    onOpenSettings,
+}: ChatWindowProps) {
+    const [files, setFiles] = useState<File[]>([]);
 
-    const bottomRef = useRef<HTMLDivElement | null>(null);
-    const timeoutRef = useRef<number | null>(null);
+    const {
+        state,
+        setInput,
+        sendMessage,
+        stopStreaming,
+        clearChatMessages,
+    } = useChatContext();
 
-    useEffect(() => {
-        setMessages(initialMessages);
-        setIsLoading(false);
+    const messages = state.messagesByChatId[activeChatId] ?? [];
+    const input = state.inputByChatId[activeChatId] ?? "";
+    const isLoading = state.loadingByChatId[activeChatId] ?? false;
+    const error = state.errorByChatId[activeChatId];
 
-        if (timeoutRef.current !== null) {
-            window.clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-    }, [initialMessages, activeChat?.id])
-
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, isLoading]);
-
-    useEffect(() => {
-        return () => {
-            if (timeoutRef.current !== null) {
-                window.clearTimeout(timeoutRef.current)
-            }
-        }
-    }, []);
-
-
-    const handleSendMessage = (text: string) => {
-        if (!activeChat) {
-            return;
-        }
-
-        const userMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            chatId: activeChat.id,
-            role: "user",
-            content: text,
-            timestamp: new Date().toISOString(),
-        };
-
-        setMessages((prev) => [...prev, userMessage]);
-        setIsLoading(true);
-
-        const delay = 1000 + Math.floor(Math.random() * 1000);
-
-        timeoutRef.current = window.setTimeout(() => {
-            const assistantMessage: ChatMessage = {
-                id: crypto.randomUUID(),
-                chatId: activeChat.id,
-                role: "assistant",
-                content: `Ответ ассистента на сообщение: "${text}"`,
-                timestamp: new Date().toISOString(),
-            };
-
-            setMessages((prev) => [...prev, assistantMessage]);
-            setIsLoading(false);
-            timeoutRef.current = null;
-
-        }, delay);
+    const handleFilesChange = (nextFiles: File[]) => {
+        setFiles(nextFiles);
     };
 
-    const hasMessages = messages.length > 0;
+    const handleRemoveFile = (indexToRemove: number) => {
+        setFiles((prevFiles) =>
+            prevFiles.filter((_, index) => index !== indexToRemove)
+        );
+    };
+
+    const handleMainSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        await sendMessage(activeChatId, files);
+        setFiles([]);
+    };
 
     return (
-        <section className="chat-window">
-            <header className="chat-window__header">
-
-                <div>
-                    <h1 className="chat-window__title">
-                        {activeChat ? activeChat.title : "Чат не выбран"}
-                    </h1>
-                    {/* <p className="chat-window__subtitle">Моковый интерфейс чата</p> */}
+        <main className="chat-window">
+            <div className="chat-window__header">
+                <div className="chat-window__title">
+                    {activeChatTitle || "Чат"}
                 </div>
 
-                <Button variant="ghost" onClick={onOpenSettings}>
+                <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={onOpenSettings}
+                    aria-label="Открыть настройки"
+                >
                     <FontAwesomeIcon icon={faGear} />
-                </Button>
-            </header>
-
-            <div className="chat-window__content">
-                {!activeChat ? (
-                    <EmptyState />
-                ) : (
-                    <>
-                        {hasMessages ? <MessageList messages={messages} /> : <EmptyState />}
-                        <TypingIndicator isVisible={isLoading} />
-                        <div ref={bottomRef} />
-                    </>
-                )}
+                </button>
             </div>
 
-            <InputArea isLoading={isLoading} onSend={handleSendMessage} />
-        </section>
+            <div className="chat-window__body">
+                {error && (
+                    <div className="chat-window__error">
+                        Ошибка: {error}
+                    </div>
+                )}
+
+                {messages.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    <MessageList messages={messages} />
+                )}
+
+                {isLoading && <TypingIndicator isVisible />}
+            </div>
+
+            <div className="chat-window__footer">
+                <InputArea
+                    input={input}
+                    isLoading={isLoading}
+                    onInputChange={(e) =>
+                        setInput(activeChatId, e.target.value)
+                    }
+                    onSubmit={handleMainSubmit}
+                    onStop={() => stopStreaming(activeChatId)}
+                    files={files}
+                    onFilesChange={handleFilesChange}
+                    onRemoveFile={handleRemoveFile}
+                />
+
+                <div className="chat-window__actions">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => clearChatMessages(activeChatId)}
+                        disabled={isLoading}
+                    >
+                        Очистить чат
+                    </Button>
+                </div>
+            </div>
+        </main>
     );
 }
 

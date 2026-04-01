@@ -1,9 +1,9 @@
-import type { ChatMessage } from "../../types"
-import Message from "./Message"
+import type { Message as ChatMessageModel } from "../../features/chat/model/types";
+import Message from "./Message";
 
 type MessageListProps = {
-    messages: ChatMessage[];
-}
+    messages: ChatMessageModel[];
+};
 
 const MessageList = ({ messages }: MessageListProps) => {
     return (
@@ -12,7 +12,7 @@ const MessageList = ({ messages }: MessageListProps) => {
                 <Message key={message.id} message={message} />
             ))}
         </div>
-    )
-}
+    );
+};
 
-export default MessageList
+export default MessageList;
